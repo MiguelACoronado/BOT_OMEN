@@ -4,36 +4,82 @@
  */
 package com.example.BOT.OMEN;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-public class MovieRecommender {
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-    private static final Map<String, Map<String, String>> recommendations = new HashMap<>();
+public class App extends TelegramLongPollingBot {
 
-    static {
-        Map<String, String> feliz = new HashMap<>();
-        feliz.put("comedia", "La Gran Apuesta, Superbad, The Intouchables");
-        feliz.put("accion", "Mad Max: Fury Road, John Wick");
+    private final MovieRecommender recommender = new MovieRecommender();
+    private final Map<String, UserSession> sessions = new HashMap<>();
 
-        Map<String, String> triste = new HashMap<>();
-        triste.put("drama", "Her, The Pursuit of Happyness, Manchester by the Sea");
-        triste.put("romance", "La La Land, Call Me by Your Name");
-
-        Map<String, String> aburrido = new HashMap<>();
-        aburrido.put("suspenso", "Inception, Gone Girl");
-        aburrido.put("aventura", "Indiana Jones, Jurassic Park");
-
-        recommendations.put("feliz", feliz);
-        recommendations.put("triste", triste);
-        recommendations.put("aburrido", aburrido);
+    public static void main(String[] args) throws Exception {
+        try {
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            botsApi.registerBot(new App());
+        } catch (Exception e) {
+            // Ignorar error de borrado webhook
+            if (e.getMessage().contains("Error removing old webhook")) {
+                System.out.println("Advertencia: no había webhook previo que borrar, ignorando.");
+            } else {
+                e.printStackTrace();
+            }
+        }
     }
 
-    public static String recommend(String mood, String genre) {
-        if (recommendations.containsKey(mood) && recommendations.get(mood).containsKey(genre)) {
-            return "Películas recomendadas para cuando estás " + mood + " y quieres ver " + genre + ":\n" +
-                    recommendations.get(mood).get(genre);
-        } else {
-            return "Lo siento, no tengo recomendaciones para ese estado de ánimo o género.";
+    @Override
+    public String getBotUsername() {
+        return "Omen_Bot";
+    }
+
+    @Override
+    public String getBotToken() {
+        return "8017509892:AAFv6FAVbBs_HZJoruUGWJIhyWN1tp_owXA";
+    }
+
+    @Override
+    public void onUpdateReceived(Update update) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            String chatId = update.getMessage().getChatId().toString();
+            String message = update.getMessage().getText().toLowerCase();
+
+            UserSession session = sessions.computeIfAbsent(chatId, k -> new UserSession());
+            String response = "";
+
+            switch (session.state) {
+                case START:
+                    session.mood = message;
+                    session.state = ChatState.ASK_GENRE;
+                    response = "Entiendo, estás " + message + ". ¿Qué género te gustaría ver? (por ejemplo: comedia, drama, acción)";
+                    break;
+
+                case ASK_GENRE:
+                    String genre = message;
+                    response = recommender.recommend(session.mood, genre);
+                    session.state = ChatState.DONE;
+                    break;
+
+                case DONE:
+                    response = "¿Quieres otra recomendación? Dime cómo te sientes.";
+                    session.state = ChatState.START;
+                    break;
+            }
+
+            sendMessage(chatId, response);
+        }
+    }
+
+    private void sendMessage(String chatId, String text) {
+        SendMessage message = new SendMessage(chatId, text);
+        try {
+            execute(message);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
