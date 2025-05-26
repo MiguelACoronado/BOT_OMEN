@@ -4,63 +4,47 @@
  */
 package com.example.BOT.OMEN;
 
-package bot;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-public class MovieRecommender {
-    private Map<String, Map<String, String>> recommendations;
+public class MovieRecommender implements Recommender {
+
+    private final Map<String, Map<String, String>> data = new HashMap<>();
 
     public MovieRecommender() {
-        recommendations = new HashMap<>();
+        Map<String, String> feliz = new HashMap<>();
+        feliz.put("comedia", "Intouchables, Superbad");
+        feliz.put("accion", "Mad Max, John Wick");
 
-        // Estado de ánimo: feliz
-        Map<String, String> felizRecs = new HashMap<>();
-        felizRecs.put("comedia", "Forrest Gump, Intouchables");
-        felizRecs.put("acción", "Guardianes de la Galaxia, Spiderman: No Way Home");
-        felizRecs.put("drama", "La La Land, The Pursuit of Happyness");
-        felizRecs.put("terror", "Scary Movie, Shaun of the Dead");
-        recommendations.put("feliz", felizRecs);
+        Map<String, String> triste = new HashMap<>();
+        triste.put("drama", "Her, The Pursuit of Happyness");
+        triste.put("romance", "La La Land, Blue Valentine");
 
-        // Estado de ánimo: triste
-        Map<String, String> tristeRecs = new HashMap<>();
-        tristeRecs.put("drama", "La vida es bella, El niño con el pijama de rayas");
-        tristeRecs.put("comedia", "Yes Man, School of Rock");
-        tristeRecs.put("acción", "John Wick, Gladiator");
-        tristeRecs.put("terror", "The Others, El orfanato");
-        recommendations.put("triste", tristeRecs);
+        Map<String, String> aburrido = new HashMap<>();
+        aburrido.put("aventura", "Indiana Jones, Jurassic Park");
+        aburrido.put("suspenso", "Inception, Gone Girl");
 
-        // Estado de ánimo: emocionado
-        Map<String, String> emocionadoRecs = new HashMap<>();
-        emocionadoRecs.put("acción", "Mad Max: Fury Road, The Dark Knight");
-        emocionadoRecs.put("comedia", "Deadpool, The Mask");
-        emocionadoRecs.put("drama", "Whiplash, Rush");
-        emocionadoRecs.put("terror", "It, A Quiet Place");
-        recommendations.put("emocionado", emocionadoRecs);
+        Map<String, String> emocionado = new HashMap<>();
+        emocionado.put("aventura", "The Avengers, Ready Player One");
+        emocionado.put("ciencia ficción", "Interstellar, The Matrix");
+        emocionado.put("musical", "The Greatest Showman, Moulin Rouge");
 
-        // Estado de ánimo: aburrido
-        Map<String, String> aburridoRecs = new HashMap<>();
-        aburridoRecs.put("comedia", "The Office (serie), Superbad");
-        aburridoRecs.put("acción", "Fast & Furious, Kingsman");
-        aburridoRecs.put("drama", "The Social Network, The Imitation Game");
-        aburridoRecs.put("terror", "Saw, Final Destination");
-        recommendations.put("aburrido", aburridoRecs);
+        data.put("feliz", feliz);
+        data.put("triste", triste);
+        data.put("aburrido", aburrido);
+        data.put("emocionado", emocionado);
     }
 
-    // Método Base
+    @Override
     public String recommend(String mood, String genre) {
-        if (recommendations.containsKey(mood) && recommendations.get(mood).containsKey(genre)) {
-            return "Películas recomendadas para cuando estás " + mood + " y quieres ver " + genre + ":\n" +
-                    recommendations.get(mood).get(genre);
-        } else {
-            return "Lo siento, no tengo recomendaciones para ese estado de ánimo o género.";
-        }
+        return data.getOrDefault(mood, Map.of())
+                   .getOrDefault(genre, "No tengo recomendaciones para ese estado de ánimo y género 😩");
     }
 
-    // NUEVO método para usar con la interfaz gráfica
-    public String recommendMovie(String mood, String genre) {
-        return recommend(mood, genre);
+    @Override
+    public Set<String> getGenresForMood(String mood) {
+        return data.getOrDefault(mood, Map.of()).keySet();
     }
 }
 
