@@ -10,27 +10,45 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MovieRecommender {
-
-    private final Map<String, Map<String, String>> recommendations = new HashMap<>();
+    private Map<String, Map<String, String>> recommendations;
 
     public MovieRecommender() {
-        Map<String, String> feliz = new HashMap<>();
-        feliz.put("comedia", "La Gran Apuesta, Superbad, The Intouchables");
-        feliz.put("accion", "Mad Max: Fury Road, John Wick");
+        recommendations = new HashMap<>();
 
-        Map<String, String> triste = new HashMap<>();
-        triste.put("drama", "Her, The Pursuit of Happyness, Manchester by the Sea");
-        triste.put("romance", "La La Land, Call Me by Your Name");
+        // Estado de ánimo: feliz
+        Map<String, String> felizRecs = new HashMap<>();
+        felizRecs.put("comedia", "Forrest Gump, Intouchables");
+        felizRecs.put("acción", "Guardianes de la Galaxia, Spiderman: No Way Home");
+        felizRecs.put("drama", "La La Land, The Pursuit of Happyness");
+        felizRecs.put("terror", "Scary Movie, Shaun of the Dead");
+        recommendations.put("feliz", felizRecs);
 
-        Map<String, String> aburrido = new HashMap<>();
-        aburrido.put("suspenso", "Inception, Gone Girl");
-        aburrido.put("aventura", "Indiana Jones, Jurassic Park");
+        // Estado de ánimo: triste
+        Map<String, String> tristeRecs = new HashMap<>();
+        tristeRecs.put("drama", "La vida es bella, El niño con el pijama de rayas");
+        tristeRecs.put("comedia", "Yes Man, School of Rock");
+        tristeRecs.put("acción", "John Wick, Gladiator");
+        tristeRecs.put("terror", "The Others, El orfanato");
+        recommendations.put("triste", tristeRecs);
 
-        recommendations.put("feliz", feliz);
-        recommendations.put("triste", triste);
-        recommendations.put("aburrido", aburrido);
+        // Estado de ánimo: emocionado
+        Map<String, String> emocionadoRecs = new HashMap<>();
+        emocionadoRecs.put("acción", "Mad Max: Fury Road, The Dark Knight");
+        emocionadoRecs.put("comedia", "Deadpool, The Mask");
+        emocionadoRecs.put("drama", "Whiplash, Rush");
+        emocionadoRecs.put("terror", "It, A Quiet Place");
+        recommendations.put("emocionado", emocionadoRecs);
+
+        // Estado de ánimo: aburrido
+        Map<String, String> aburridoRecs = new HashMap<>();
+        aburridoRecs.put("comedia", "The Office (serie), Superbad");
+        aburridoRecs.put("acción", "Fast & Furious, Kingsman");
+        aburridoRecs.put("drama", "The Social Network, The Imitation Game");
+        aburridoRecs.put("terror", "Saw, Final Destination");
+        recommendations.put("aburrido", aburridoRecs);
     }
 
+    // Método Base
     public String recommend(String mood, String genre) {
         if (recommendations.containsKey(mood) && recommendations.get(mood).containsKey(genre)) {
             return "Películas recomendadas para cuando estás " + mood + " y quieres ver " + genre + ":\n" +
@@ -39,4 +57,10 @@ public class MovieRecommender {
             return "Lo siento, no tengo recomendaciones para ese estado de ánimo o género.";
         }
     }
+
+    // NUEVO método para usar con la interfaz gráfica
+    public String recommendMovie(String mood, String genre) {
+        return recommend(mood, genre);
+    }
 }
+
