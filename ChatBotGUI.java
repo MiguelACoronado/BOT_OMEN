@@ -1,96 +1,82 @@
 package bot;
 
-import java.awt.BorderLayout;
-import java.util.HashMap;
-import java.util.Map;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+public class ChatBotGUI {
+    private JFrame frame;
+    private JPanel panel;
+    private JTextArea outputArea;
 
-public class ChatBotGUI extends JFrame {
-
-    private final JTextArea chatArea = new JTextArea();
-    private final JTextField inputField = new JTextField();
-
-    private final MovieRecommender recommender = new MovieRecommender();
-    private final Map<String, UserSession> sessions = new HashMap<>();
-    private final String USER_ID = "local_user";
+    private String selectedMood = null;
+    private String selectedGenre = null;
 
     public ChatBotGUI() {
-        setTitle("Chatbot Recomendador de Películas");
-        setSize(500, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        frame = new JFrame("Recomendador de Películas");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 400);
 
-        chatArea.setEditable(false);
-        chatArea.setLineWrap(true);
-        chatArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(chatArea);
+        panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        inputField.addActionListener(e -> {
-            String input = inputField.getText().trim();
-            if (!input.isEmpty()) {
-                addUserMessage(input);
-                processUserMessage(input.toLowerCase());
-                inputField.setText("");
-            }
-        });
+        outputArea = new JTextArea(5, 30);
+        outputArea.setEditable(false);
+        panel.add(new JScrollPane(outputArea));
 
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
-        getContentPane().add(inputField, BorderLayout.SOUTH);
+        showMoodButtons();
 
-        sessions.put(USER_ID, new UserSession());
-        addBotMessage("¡Hola! ¿Cómo te sientes hoy? Por ejemplo: feliz, triste, aburrido");
+        frame.getContentPane().add(BorderLayout.CENTER, panel);
+        frame.setVisible(true);
     }
 
-    private void addUserMessage(String message) {
-        chatArea.append("Tú: " + message + "\n");
-    }
-
-    private void addBotMessage(String message) {
-        chatArea.append("Bot: " + message + "\n\n");
-        chatArea.setCaretPosition(chatArea.getDocument().getLength());
-    }
-
-    private void processUserMessage(String message) {
-        UserSession session = sessions.get(USER_ID);
-        String response;
-
-        switch (session.state) {
-            case START:
-                session.mood = message;
-                session.state = ChatState.ASK_GENRE;
-                response = "Entiendo, estás " + message + ". ¿Qué género te gustaría ver? (ej: comedia, drama, acción)";
-                break;
-
-            case ASK_GENRE:
-                String genre = message;
-                response = recommender.recommend(session.mood, genre);
-                session.state = ChatState.DONE;
-                break;
-
-            case DONE:
-                response = "¿Quieres otra recomendación? Dime cómo te sientes.";
-                session.state = ChatState.START;
-                break;
-
-            default:
-                response = "No te entendí. Por favor, dime cómo te sientes.";
-                session.state = ChatState.START;
-                break;
+    private void showMoodButtons() {
+        panel.add(new JLabel("¿Cuál es tu estado de ánimo hoy?"));
+        String[] moods = {"Feliz", "Triste", "Emocionado", "Aburrido"};
+        JPanel moodPanel = new JPanel();
+        for (String mood : moods) {
+            JButton button = new JButton(mood);
+            button.addActionListener(e -> {
+                selectedMood = mood.toLowerCase();
+                outputArea.append("Estado de ánimo seleccionado: " + mood + "\n");
+                panel.remove(moodPanel);
+                showGenreButtons();
+                frame.revalidate();
+                frame.repaint();
+            });
+            moodPanel.add(button);
         }
+        panel.add(moodPanel);
+    }
 
-        addBotMessage(response);
+    private void showGenreButtons() {
+        panel.add(new JLabel("¿Qué género de película prefieres?"));
+        String[] genres = {"Acción", "Comedia", "Drama", "Terror"};
+        JPanel genrePanel = new JPanel();
+        for (String genre : genres) {
+            JButton button = new JButton(genre);
+            button.addActionListener(e -> {
+                selectedGenre = genre.toLowerCase();
+                outputArea.append("Género seleccionado: " + genre + "\n");
+                panel.remove(genrePanel);
+                recommendMovie();
+                frame.revalidate();
+                frame.repaint();
+            });
+            genrePanel.add(button);
+        }
+        panel.add(genrePanel);
+    }
+
+    private void recommendMovie() {
+        MovieRecommender recommender = new MovieRecommender();
+        String recommendation = recommender.recommendMovie(selectedMood, selectedGenre);
+        outputArea.append("\nRecomendación: " + recommendation);
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            ChatBotGUI gui = new ChatBotGUI();
-            gui.setVisible(true);
-        });
+        SwingUtilities.invokeLater(ChatBotGUI::new);
     }
 }
+
